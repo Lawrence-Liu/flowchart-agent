@@ -28,3 +28,4 @@ dist/
 
 # Project outputs
 flowchart_output.html
+.env
