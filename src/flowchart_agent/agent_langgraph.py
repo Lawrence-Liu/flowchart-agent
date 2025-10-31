@@ -55,12 +55,13 @@ def generate_mermaid(state: AgentState) -> AgentState:
     
     # Contextual prompt for regeneration
     history_context = "\n".join(state['critique_history'])
+    print("history_context:", history_context)
     if state['revision_number'] > 0:
         system_prompt = (
             "You are an expert Mermaid code generator. The user wants a Mermaid flowchart to represent their request. "
             f"Your previous attempt was critiqued. Use the following critique history to revise the code. "
             "Output ONLY the complete, corrected Mermaid code block, enclosed in triple backticks and the 'mermaid' language tag. "
-            "Ensure the output is a `graph TD` or `graph LR` flowchart, using node shapes like [], () or {}."
+            "Ensure the output is a `graph TD` or `graph LR` flowchart, using node shapes like [], () etc."
             f"\n\nCRITIQUE HISTORY:\n{history_context}"
         )
     else:
@@ -68,12 +69,12 @@ def generate_mermaid(state: AgentState) -> AgentState:
             "You are an expert Mermaid code generator. Your task is to convert the user's request, which may be "
             "natural language, code, or other text, into a clean, syntactically correct Mermaid flowchart. "
             "Output ONLY the complete Mermaid code block, enclosed in triple backticks and the 'mermaid' language tag. "
-            "Ensure the output is a `graph TD` or `graph LR` flowchart, using node shapes like [], () or {}."
+            "Ensure the output is a `graph TD` or `graph LR` flowchart, using node shapes like [], () etc"
         )
 
     prompt = ChatPromptTemplate.from_messages([
         ("system", system_prompt),
-        ("human", f"Original Request:\n{state['user_input']}\n\nCurrent Mermaid Code (if any):\n{state['mermaid_code']}")
+        ("human", "Original Request:\n{user_input}\n\nCurrent Mermaid Code (if any):\n{mermaid_code}")
     ])
     
     # Generate the code
@@ -124,21 +125,16 @@ def reflect_on_mermaid(state: AgentState) -> AgentState:
          "Evaluate the syntax, completeness, accuracy, and clarity. You MUST output a JSON object conforming to the Reflection schema."
          ),
         ("human", 
-         f"Original Request:\n{state['user_input']}\n\n"
-         f"Mermaid Code to Critique:\n{state['mermaid_code']}"
+         "Original Request:\n{user_input}\n\n"
+         "Mermaid Code to Critique:\n{mermaid_code}"
         )
-    ]).partial(
-        schema=Reflection.schema_json(indent=2)
-    )
+    ])
     
     # Get structured JSON response
     reflection_chain = reflection_prompt | llm.with_structured_output(Reflection)
     
     try:
-        reflection_result = reflection_chain.invoke({
-            "user_input": state['user_input'], 
-            "mermaid_code": state['mermaid_code']
-        })
+        reflection_result = reflection_chain.invoke({"user_input": state['user_input'], "mermaid_code": state['mermaid_code']})
         
         critique = reflection_result.critique_or_suggestion
         print(f"--- REFLECTOR: Decision: {'SATISFACTORY' if reflection_result.is_satisfactory else 'NEEDS REFINEMENT'} ---")
@@ -170,7 +166,7 @@ def should_continue(state: AgentState) -> str:
     Conditional edge function to determine the next node based on reflection.
     """
     reflection: Reflection = state.get('reflection_output')
-    
+    print(reflection)
     # If reflection is satisfactory OR max revisions reached, END
     if reflection and reflection.is_satisfactory:
         return "end"
@@ -226,12 +222,7 @@ if __name__ == "__main__":
     app = create_agent_workflow()
     
     # Example Request (Natural Language)
-    prompt = (
-        "Create a simple decision flowchart for finding a movie to watch. "
-        "Start with 'Check Streaming Services'. If 'Found Something Good?', go to 'Start Watching'. "
-        "If 'Not Found', check 'Ask a Friend'. If 'Friend Suggests One', go back to 'Start Watching'. "
-        "If 'Still No Idea', end with 'Read a Book Instead'."
-    )
+    prompt =  "Create a simple decision flowchart for finding a movie to watch. Start with [Check Streaming Services]. If [Found Something Good?], go to [Start Watching]. If [Not Found], check [ask a Friend]. If [Friend Suggests One], go back to [Start Watching]. If [Still No Idea], end with [Read a Book Instead]."
     
     initial_state = {
         "user_input": prompt,
