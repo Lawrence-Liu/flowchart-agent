@@ -1,0 +1,30 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env/
+
+# Dependency / build artifacts
+.python-version
+build/
+dist/
+*.egg-info/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+
+# IDE/editor metadata
+.idea/
+.vscode/
+*.swp
+
+# macOS
+.DS_Store
+
+# Project outputs
+flowchart_output.html
