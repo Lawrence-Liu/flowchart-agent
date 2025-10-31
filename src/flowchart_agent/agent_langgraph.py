@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 import json
-from typing import TypedDict, List, Annotated
+from typing_extensions import Annotated, List, NotRequired, TypedDict
 from uuid import uuid4
 from operator import add
 
@@ -28,6 +30,7 @@ class AgentState(TypedDict):
     mermaid_code: str  # The current generated Mermaid code
     critique_history: Annotated[List[str], add]  # List of past critiques
     revision_number: int  # Current revision count
+    reflection_output: NotRequired[Reflection]
 
 
 # --- 2. Pydantic Schema for Structured Reflection ---
@@ -248,14 +251,8 @@ if __name__ == "__main__":
     # Final Output
     final_mermaid_code = final_state['mermaid_code']
     print("\n--- FINAL GENERATED MERMAID CODE ---")
-    print("```mermaid")
     print(final_mermaid_code)
-    print("```")
-    
-    # Provide the link for rendering
-    print("\n--- RENDERED FLOWCHART ---")
-    print("Copy the code above and paste it into the Mermaid Live Editor to see the flowchart:")
-    print("[https://mermaid.live/edit](https://mermaid.live/edit)")
+
 
     # Optional: Displaying the entire history
     print("\n--- REVISION HISTORY ---")
